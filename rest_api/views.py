@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from transformers import pipeline, AutoTokenizer
 from optimum.onnxruntime import ORTModelForSequenceClassification
 from .youtube_data import get_comments_for_video
+from googleapiclient.model import HttpError
 
 MODEL = "cardiffnlp/twitter-roberta-base-sentiment-latest"
 tokenizer = AutoTokenizer.from_pretrained(MODEL)
@@ -47,6 +48,13 @@ def get_percentages(preds):
 @permission_classes([IsAuthenticated])
 def index(request):
     video_id = request.query_params.get('video_id')
-    comments = get_comments_for_video(video_id)
+    if video_id is None:
+        return Response({"detail": "video_id parameter not supplied"})
+    try:
+        comments = get_comments_for_video(video_id)
+    except HttpError:
+        return Response({"detail": "invalid video_id parameter"})
+    if len(comments) == 0:
+        return Response({"detail": "video has no comments"})
     output = get_percentages(troberta(preprocess(comments)))
     return Response(output)

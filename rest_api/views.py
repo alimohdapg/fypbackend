@@ -1,11 +1,10 @@
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from transformers import pipeline, AutoTokenizer
 from optimum.onnxruntime import ORTModelForSequenceClassification
 from .youtube_data import get_comments_for_video
 
-labels = ['Pos', 'Neu', 'Neg']
 MODEL = "cardiffnlp/twitter-roberta-base-sentiment-latest"
 tokenizer = AutoTokenizer.from_pretrained(MODEL)
 model = ORTModelForSequenceClassification.from_pretrained("rest_api/onnx")
@@ -45,8 +44,8 @@ def get_percentages(preds):
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def index(request):
-    permission_classes = [IsAuthenticated]
     video_id = request.query_params.get('video_id')
     comments = get_comments_for_video(video_id)
     output = get_percentages(troberta(preprocess(comments)))

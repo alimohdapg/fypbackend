@@ -9,7 +9,7 @@ from googleapiclient.model import HttpError
 MODEL = "cardiffnlp/twitter-roberta-base-sentiment-latest"
 tokenizer = AutoTokenizer.from_pretrained(MODEL)
 model = ORTModelForSequenceClassification.from_pretrained("rest_api/onnx")
-troberta = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer)
+troberta = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, max_length=512, truncation=True)
 
 
 def preprocess(comments):

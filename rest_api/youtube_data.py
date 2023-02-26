@@ -18,7 +18,7 @@ youtube = googleapiclient.discovery.build(
     api_service_name, api_version, developerKey=DEVELOPER_KEY)
 
 
-def get_comments_for_video(video_id):
+def get_comments_for_video(video_id, comment_count):
     comments = []
     request = youtube.commentThreads().list(
         part="snippet",
@@ -41,5 +41,5 @@ def get_comments_for_video(video_id):
     if len(comment_response['items']) > 0:
         for item in comment_response['items']:
             # 1400 is the maximum length that can be passed to the sentiment analysis pipeline
-            comments.append(item['snippet']['topLevelComment']['snippet']['textOriginal'][:1400])
+            comments.append(item['snippet']['topLevelComment']['snippet']['textOriginal'][:comment_count])
     return comments

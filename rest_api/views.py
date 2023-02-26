@@ -48,10 +48,11 @@ def get_percentages(preds):
 @permission_classes([IsAuthenticated])
 def index(request):
     video_id = request.query_params.get('video_id')
+    comment_count = request.query_params.get('comment_count')
     if video_id is None:
         return Response({"detail": "video_id parameter not supplied"})
     try:
-        comments = get_comments_for_video(video_id)
+        comments = get_comments_for_video(video_id, comment_count)
     except HttpError:
         return Response({"detail": "invalid video_id parameter"})
     if len(comments) == 0:

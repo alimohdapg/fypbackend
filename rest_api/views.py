@@ -1,9 +1,10 @@
+import dateutil.parser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from transformers import pipeline, AutoTokenizer
 from optimum.onnxruntime import ORTModelForSequenceClassification
-from .youtube_data import get_comments_for_video
+from .youtube_data import get_comments_for_video, advanced_get_comments_for_video
 from googleapiclient.model import HttpError
 
 MODEL = "cardiffnlp/twitter-roberta-base-sentiment-latest"
@@ -48,13 +49,24 @@ def get_percentages(preds):
 @permission_classes([IsAuthenticated])
 def index(request):
     video_id = request.query_params.get('video_id')
-    comment_count = request.query_params.get('comment_count')
     if video_id is None:
         return Response({"detail": "video_id parameter not supplied"})
-    try:
-        comments = get_comments_for_video(video_id, comment_count)
-    except HttpError:
-        return Response({"detail": "invalid video_id parameter"})
+    priority = request.query_params.get('priority')
+    if priority:
+        comment_count = int(request.query_params.get('comment_count'))
+        like_count = int(request.query_params.get('like_count'))
+        min_max_like_count = True if request.query_params.get('min_max_like_count') == 'min' else False
+        date = dateutil.parser.isoparse(request.query_params.get('date'))
+        try:
+            comments = advanced_get_comments_for_video(video_id, priority, comment_count, like_count,
+                                                       min_max_like_count, date)
+        except HttpError:
+            return Response({"detail": "one or more parameter is invalid"})
+    else:
+        try:
+            comments = get_comments_for_video(video_id)
+        except HttpError:
+            return Response({"detail": "one or more parameter is invalid"})
     if len(comments) == 0:
         return Response({"detail": "video has no comments"})
     output = get_percentages(troberta(preprocess(comments)))
